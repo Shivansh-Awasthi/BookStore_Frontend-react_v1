@@ -1,12 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
     const [booksByCategory, setBooksByCategory] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
-    // Categories to display
-    const categories = ['History', 'Science', 'Kid Story', 'Fiction', 'Biography'];
+    // Categories to display with their routes
+    const categories = [
+        { name: 'History', route: '/collections/history' },
+        { name: 'Science', route: '/collections/science' },
+        { name: 'Kid Story', route: '/collections/kids' },
+        { name: 'Fiction', route: '/collections/fiction' },
+        { name: 'Biography', route: '/collections/biography' }
+    ];
 
     // Fetch books for each category
     useEffect(() => {
@@ -18,15 +26,15 @@ const HomePage = () => {
                 for (const category of categories) {
                     try {
                         const response = await fetch(
-                            `${process.env.VITE_API_URL}/api/books/category/${category}?page=1&limit=8`
+                            `${process.env.VITE_API_URL}/api/books/category/${category.name}?page=1&limit=8`
                         );
                         const data = await response.json();
 
                         if (data.success) {
-                            categoryBooks[category] = data.data.books;
+                            categoryBooks[category.name] = data.data.books;
                         }
                     } catch (err) {
-                        console.error(`Error fetching ${category} books:`, err);
+                        console.error(`Error fetching ${category.name} books:`, err);
                     }
                 }
 
@@ -44,7 +52,10 @@ const HomePage = () => {
 
     // Book Card Component
     const BookCard = ({ book }) => (
-        <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden group">
+        <div
+            className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden group cursor-pointer"
+            onClick={() => navigate(`/products/${book._id}`)}
+        >
             <div className="relative overflow-hidden">
                 <img
                     src={book.images.find(img => img.isPrimary)?.url || book.images[0]?.url}
@@ -74,7 +85,14 @@ const HomePage = () => {
                     </div>
                 </div>
 
-                <button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-2 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105">
+                <button
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-2 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105"
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent navigation to book page
+                        // Add to cart logic here
+                        console.log('Add to cart:', book._id);
+                    }}
+                >
                     Add to Cart
                 </button>
             </div>
@@ -86,9 +104,12 @@ const HomePage = () => {
         <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">
-                    {category} Books
+                    {category.name} Books
                 </h2>
-                <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center">
+                <button
+                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center"
+                    onClick={() => navigate(category.route)}
+                >
                     View All
                     <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -126,6 +147,12 @@ const HomePage = () => {
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
                 <div className="text-center text-red-600">
                     <p>{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+                    >
+                        Try Again
+                    </button>
                 </div>
             </div>
         );
@@ -144,10 +171,21 @@ const HomePage = () => {
                         Discover Your Next Favorite Book with Amazing Discounts!
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <button className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <button
+                            className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                            onClick={() => navigate('/collections/science')}
+                        >
                             Shop Now
                         </button>
-                        <button className="border-2 border-white text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-white hover:bg-opacity-20 transition-all duration-300">
+                        <button
+                            className="border-2 border-white text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-white hover:bg-opacity-20 transition-all duration-300"
+                            onClick={() => {
+                                // Scroll to categories section
+                                document.getElementById('categories-section')?.scrollIntoView({
+                                    behavior: 'smooth'
+                                });
+                            }}
+                        >
                             Browse Categories
                         </button>
                     </div>
@@ -169,7 +207,7 @@ const HomePage = () => {
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 py-12">
                 {/* Featured Categories */}
-                <div className="text-center mb-16">
+                <div className="text-center mb-16" id="categories-section">
                     <h2 className="text-4xl font-bold text-gray-800 mb-4">
                         Featured Categories
                     </h2>
@@ -183,15 +221,16 @@ const HomePage = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-16">
                     {categories.map((category) => (
                         <div
-                            key={category}
+                            key={category.name}
                             className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border-2 border-transparent hover:border-blue-500"
+                            onClick={() => navigate(category.route)}
                         >
                             <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-lg">
-                                {category.charAt(0)}
+                                {category.name.charAt(0)}
                             </div>
-                            <h3 className="font-semibold text-gray-800">{category}</h3>
+                            <h3 className="font-semibold text-gray-800">{category.name}</h3>
                             <p className="text-gray-500 text-sm mt-1">
-                                {booksByCategory[category]?.length || 0} books
+                                {booksByCategory[category.name]?.length || 0} books
                             </p>
                         </div>
                     ))}
@@ -201,9 +240,9 @@ const HomePage = () => {
                 <div className="space-y-16">
                     {categories.map((category) => (
                         <CategorySection
-                            key={category}
+                            key={category.name}
                             category={category}
-                            books={booksByCategory[category]}
+                            books={booksByCategory[category.name]}
                         />
                     ))}
                 </div>
@@ -216,7 +255,10 @@ const HomePage = () => {
                     <p className="text-xl mb-6 opacity-90">
                         Join thousands of happy readers and discover your next adventure!
                     </p>
-                    <button className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">
+                    <button
+                        className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+                        onClick={() => navigate('/collections/science')}
+                    >
                         Explore All Books
                     </button>
                 </div>
@@ -229,11 +271,11 @@ const HomePage = () => {
                     <p className="text-gray-400 mb-6">
                         Your one-stop destination for amazing book deals and literary adventures
                     </p>
-                    <div className="flex justify-center space-x-6 text-sm text-gray-400">
+                    <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 text-sm text-gray-400">
                         <span>© 2024 Crazy Deals Online</span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>Privacy Policy</span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>Terms of Service</span>
                     </div>
                 </div>

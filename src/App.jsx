@@ -8,6 +8,9 @@ import Fiction from './components/AllPages/BooksCategory/Fiction';
 import Kids from './components/AllPages/BooksCategory/Kids';
 import Biography from './components/AllPages/BooksCategory/Biography';
 import SingleBookPage from './components/AllPages/SingleBook/SingleBookPage';
+import Cart from './components/AllPages/CartPages/Cart';
+import Login from './components/Admin/Login';
+import SignUp from './components/Admin/SignUp';
 
 function App() {
 
@@ -27,6 +30,14 @@ function App() {
 
           {/* Book Detailed Page */}
           <Route path='/products/:id' element={<SingleBookPage />} />
+
+          {/* cart page routtes */}
+          <Route path='/viewcart' element={<Cart />} />
+
+
+          {/* user authentication routes */}
+          <Route path='/login' element={<Login />} />
+          <Route path='/sign-up' element={<SignUp />} />
 
         </Routes>
       </BrowserRouter>

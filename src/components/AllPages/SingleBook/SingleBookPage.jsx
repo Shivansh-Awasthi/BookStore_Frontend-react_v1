@@ -9,6 +9,8 @@ const SingleBookPage = () => {
     const [error, setError] = useState(null);
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    const [addingToCart, setAddingToCart] = useState(false);
+    const [cartMessage, setCartMessage] = useState('');
 
     // Fetch single book by ID
     useEffect(() => {
@@ -37,6 +39,65 @@ const SingleBookPage = () => {
             fetchBook();
         }
     }, [id]);
+
+    // Add to Cart Function
+    const handleAddToCart = async () => {
+        try {
+            setAddingToCart(true);
+            setCartMessage('');
+
+            // Check if user is authenticated
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setCartMessage('Please login to add items to cart');
+                setTimeout(() => {
+                    navigate('/login');
+                }, 1500);
+                return;
+            }
+
+            // Prepare the request
+            const response = await fetch(`${process.env.VITE_API_URL}/api/cart/add`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    bookId: book._id,
+                    quantity: quantity
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setCartMessage('✅ Added to cart successfully!');
+
+                // Clear message after 3 seconds
+                setTimeout(() => {
+                    setCartMessage('');
+                }, 3000);
+            } else {
+                setCartMessage(`❌ ${data.message || 'Failed to add to cart'}`);
+
+                // Clear error message after 3 seconds
+                setTimeout(() => {
+                    setCartMessage('');
+                }, 3000);
+            }
+        } catch (err) {
+            console.error('Add to cart error:', err);
+            setCartMessage('❌ Network error. Please try again.');
+
+            // Clear error message after 3 seconds
+            setTimeout(() => {
+                setCartMessage('');
+            }, 3000);
+        } finally {
+            setAddingToCart(false);
+        }
+    };
 
     // Calculate discount percentage
     const calculateDiscount = () => {
@@ -103,6 +164,16 @@ const SingleBookPage = () => {
                     <span>→</span>
                     <span className="text-gray-900 font-medium truncate">{book.title}</span>
                 </nav>
+
+                {/* Cart Message */}
+                {cartMessage && (
+                    <div className={`mb-6 p-4 rounded-xl text-center font-semibold transition-all duration-300 ${cartMessage.includes('✅')
+                        ? 'bg-green-100 text-green-800 border border-green-200'
+                        : 'bg-red-100 text-red-800 border border-red-200'
+                        }`}>
+                        {cartMessage}
+                    </div>
+                )}
 
                 {/* Main Content */}
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -224,14 +295,16 @@ const SingleBookPage = () => {
                                         <div className="flex items-center space-x-2">
                                             <button
                                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                                                disabled={quantity <= 1}
+                                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                             >
                                                 -
                                             </button>
                                             <span className="w-12 text-center font-semibold">{quantity}</span>
                                             <button
                                                 onClick={() => setQuantity(Math.min(book.stock, quantity + 1))}
-                                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                                                disabled={quantity >= book.stock}
+                                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                             >
                                                 +
                                             </button>
@@ -242,11 +315,38 @@ const SingleBookPage = () => {
                                     </div>
 
                                     <div className="flex space-x-4">
-                                        <button className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
-                                            Add to Cart - ₹{(book.price * quantity).toFixed(2)}
+                                        <button
+                                            onClick={handleAddToCart}
+                                            disabled={addingToCart}
+                                            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
+                                        >
+                                            {addingToCart ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                                    Adding...
+                                                </>
+                                            ) : (
+                                                `Add to Cart - ₹${(book.price * quantity).toFixed(2)}`
+                                            )}
                                         </button>
                                         <button className="w-12 h-12 border-2 border-gray-300 rounded-xl flex items-center justify-center hover:border-gray-400 transition-colors">
                                             <span className="text-xl">❤️</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Quick Actions */}
+                                    <div className="flex space-x-3">
+                                        <button
+                                            onClick={() => navigate('/viewcart')}
+                                            className="flex-1 border-2 border-blue-500 text-blue-600 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300"
+                                        >
+                                            View Cart
+                                        </button>
+                                        <button
+                                            onClick={() => navigate('/collections/science')}
+                                            className="flex-1 border-2 border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300"
+                                        >
+                                            Continue Shopping
                                         </button>
                                     </div>
                                 </div>
@@ -359,7 +459,7 @@ const SingleBookPage = () => {
                         Love this book? Explore more in {book.category}
                     </h3>
                     <button
-                        onClick={() => navigate(`/category/${book.category}`)}
+                        onClick={() => navigate(`/collections/${book.category.toLowerCase()}`)}
                         className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
                     >
                         Browse {book.category} Books
