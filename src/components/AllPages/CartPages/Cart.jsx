@@ -13,30 +13,42 @@ const Cart = () => {
         const fetchCart = async () => {
             try {
                 setLoading(true);
-                const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
-                const response = await fetch('http://localhost:3000/api/cart', {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    setError('Please login to view your cart');
+                    setLoading(false);
+                    return;
+                }
+
+                const response = await fetch(`${process.env.VITE_API_URL}/api/cart`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
 
+                if (response.status === 401) {
+                    setError('Please login to view your cart');
+                    setLoading(false);
+                    return;
+                }
+
                 if (!response.ok) {
-                    throw new Error('Failed to fetch cart');
+                    throw new Error(`Failed to fetch cart: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log(data);
-
 
                 if (data.success) {
+                    // The cart data structure from your API
                     setCart(data.data);
                 } else {
                     setError(data.message || 'Failed to load cart');
                 }
             } catch (err) {
-                setError(err.message);
                 console.error('Error fetching cart:', err);
+                setError(err.message || 'Failed to load cart');
             } finally {
                 setLoading(false);
             }
@@ -69,7 +81,7 @@ const Cart = () => {
             }
         } catch (err) {
             console.error('Error updating quantity:', err);
-            alert('Failed to update quantity');
+            alert('Failed to update quantity: ' + err.message);
         } finally {
             setUpdatingItems(prev => {
                 const newSet = new Set(prev);
@@ -84,7 +96,7 @@ const Cart = () => {
         try {
             setUpdatingItems(prev => new Set(prev).add(bookId));
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3000/api/cart/items/${bookId}`, {
+            const response = await fetch(`${process.env.VITE_API_URL}/api/cart/items/${bookId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -100,7 +112,7 @@ const Cart = () => {
             }
         } catch (err) {
             console.error('Error removing item:', err);
-            alert('Failed to remove item');
+            alert('Failed to remove item: ' + err.message);
         } finally {
             setUpdatingItems(prev => {
                 const newSet = new Set(prev);
@@ -116,7 +128,7 @@ const Cart = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3000/api/cart/clear', {
+            const response = await fetch(`${process.env.VITE_API_URL}/api/cart/clear`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -132,9 +144,11 @@ const Cart = () => {
             }
         } catch (err) {
             console.error('Error clearing cart:', err);
-            alert('Failed to clear cart');
+            alert('Failed to clear cart: ' + err.message);
         }
     };
+
+
 
     if (loading) {
         return (
@@ -154,18 +168,44 @@ const Cart = () => {
                     <div className="text-6xl mb-4">🛒</div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Unable to Load Cart</h2>
                     <p className="text-gray-600 mb-6">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
-                    >
-                        Try Again
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        {error.includes('login') ? (
+                            <>
+                                <button
+                                    onClick={() => navigate('/login')}
+                                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    onClick={() => navigate('/signup')}
+                                    className="border-2 border-blue-500 text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300"
+                                >
+                                    Sign Up
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+                            >
+                                Try Again
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         );
     }
 
-    if (!cart || !cart.items || cart.items.length === 0) {
+    // Check if cart is empty - based on your API structure
+    const cartItems = cart?.cart?.items || cart?.items || [];
+    const totalPrice = cart?.totalPrice || cart?.cart?.totalPrice || 0;
+    const discountedPrice = cart?.discountedPrice || cart?.cart?.discountedPrice || totalPrice;
+    const totalItems = cart?.totalItems || cart?.cart?.totalItems || 0;
+    const savings = cart?.savings || cart?.cart?.savings || 0;
+
+    if (cartItems.length === 0) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
                 <div className="max-w-4xl mx-auto px-4">
@@ -211,6 +251,7 @@ const Cart = () => {
                     <p className="text-gray-600 text-lg">
                         Review your items and proceed to checkout
                     </p>
+
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -220,7 +261,7 @@ const Cart = () => {
                         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-gray-900">
-                                    Cart Items ({cart.items.length})
+                                    Cart Items ({cartItems.length})
                                 </h2>
                                 <button
                                     onClick={clearCart}
@@ -236,17 +277,17 @@ const Cart = () => {
 
                         {/* Cart Items List */}
                         <div className="space-y-4">
-                            {cart.items.map((item) => (
-                                <div key={item.book._id} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+                            {cartItems.map((item) => (
+                                <div key={item.book?._id || item._id} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
                                     <div className="flex flex-col sm:flex-row gap-6">
                                         {/* Book Image */}
                                         <div
                                             className="flex-shrink-0 w-24 h-32 bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
-                                            onClick={() => navigate(`/products/${item.book._id}`)}
+                                            onClick={() => navigate(`/products/${item.book?._id}`)}
                                         >
                                             <img
-                                                src={item.book.images?.find(img => img.isPrimary)?.url || item.book.images?.[0]?.url}
-                                                alt={item.book.title}
+                                                src={item.book?.images?.find(img => img.isPrimary)?.url || item.book?.images?.[0]?.url || '/placeholder-book.jpg'}
+                                                alt={item.book?.title || 'Book image'}
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
@@ -257,17 +298,17 @@ const Cart = () => {
                                                 <div className="flex-grow">
                                                     <h3
                                                         className="font-bold text-gray-900 text-lg mb-1 cursor-pointer hover:text-blue-600 transition-colors"
-                                                        onClick={() => navigate(`/products/${item.book._id}`)}
+                                                        onClick={() => navigate(`/products/${item.book?._id}`)}
                                                     >
-                                                        {item.book.title}
+                                                        {item.book?.title || 'Unknown Book'}
                                                     </h3>
-                                                    <p className="text-gray-600 text-sm mb-2">by {item.book.author}</p>
+                                                    <p className="text-gray-600 text-sm mb-2">by {item.book?.author || 'Unknown Author'}</p>
                                                     <div className="flex items-center space-x-2 mb-3">
                                                         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">
-                                                            {item.book.format}
+                                                            {item.book?.format || 'Unknown Format'}
                                                         </span>
                                                         <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                                                            {item.book.category}
+                                                            {item.book?.category || 'Unknown Category'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -275,10 +316,10 @@ const Cart = () => {
                                                 {/* Price */}
                                                 <div className="text-right">
                                                     <p className="text-2xl font-bold text-gray-900 mb-1">
-                                                        ₹{(item.book.price * item.quantity).toFixed(2)}
+                                                        ₹{((item.book?.price || item.price || 0) * item.quantity).toFixed(2)}
                                                     </p>
                                                     <p className="text-gray-600 text-sm">
-                                                        ₹{item.book.price} × {item.quantity}
+                                                        ₹{(item.book?.price || item.price || 0).toFixed(2)} × {item.quantity}
                                                     </p>
                                                 </div>
                                             </div>
@@ -289,22 +330,22 @@ const Cart = () => {
                                                     <span className="text-gray-700 font-semibold">Quantity:</span>
                                                     <div className="flex items-center space-x-2">
                                                         <button
-                                                            onClick={() => updateQuantity(item.book._id, item.quantity - 1)}
-                                                            disabled={updatingItems.has(item.book._id) || item.quantity <= 1}
+                                                            onClick={() => updateQuantity(item.book?._id, item.quantity - 1)}
+                                                            disabled={updatingItems.has(item.book?._id) || item.quantity <= 1}
                                                             className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                                         >
                                                             -
                                                         </button>
                                                         <span className="w-12 text-center font-semibold">
-                                                            {updatingItems.has(item.book._id) ? (
+                                                            {updatingItems.has(item.book?._id) ? (
                                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
                                                             ) : (
                                                                 item.quantity
                                                             )}
                                                         </span>
                                                         <button
-                                                            onClick={() => updateQuantity(item.book._id, item.quantity + 1)}
-                                                            disabled={updatingItems.has(item.book._id)}
+                                                            onClick={() => updateQuantity(item.book?._id, item.quantity + 1)}
+                                                            disabled={updatingItems.has(item.book?._id)}
                                                             className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                                         >
                                                             +
@@ -314,11 +355,11 @@ const Cart = () => {
 
                                                 {/* Remove Button */}
                                                 <button
-                                                    onClick={() => removeItem(item.book._id)}
-                                                    disabled={updatingItems.has(item.book._id)}
+                                                    onClick={() => removeItem(item.book?._id)}
+                                                    disabled={updatingItems.has(item.book?._id)}
                                                     className="text-red-600 hover:text-red-700 font-semibold text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                                 >
-                                                    {updatingItems.has(item.book._id) ? (
+                                                    {updatingItems.has(item.book?._id) ? (
                                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
                                                     ) : (
                                                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,14 +384,14 @@ const Cart = () => {
                             {/* Pricing Breakdown */}
                             <div className="space-y-3 mb-6">
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Subtotal</span>
-                                    <span>₹{cart.subtotal?.toFixed(2) || '0.00'}</span>
+                                    <span>Subtotal ({totalItems} items)</span>
+                                    <span>₹{totalPrice.toFixed(2)}</span>
                                 </div>
 
-                                {cart.discount > 0 && (
+                                {savings > 0 && (
                                     <div className="flex justify-between text-green-600">
                                         <span>Discount</span>
-                                        <span>-₹{cart.discount.toFixed(2)}</span>
+                                        <span>-₹{savings.toFixed(2)}</span>
                                     </div>
                                 )}
 
@@ -360,20 +401,23 @@ const Cart = () => {
                                 </div>
 
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Tax</span>
-                                    <span>₹{(cart.subtotal * 0.18).toFixed(2)}</span>
+                                    <span>Tax (18%)</span>
+                                    <span>₹{(totalPrice * 0.18).toFixed(2)}</span>
                                 </div>
 
                                 <div className="border-t border-gray-200 pt-3">
                                     <div className="flex justify-between text-lg font-bold text-gray-900">
                                         <span>Total</span>
-                                        <span>₹{cart.total?.toFixed(2) || '0.00'}</span>
+                                        <span>₹{(discountedPrice + (totalPrice * 0.18)).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Checkout Button */}
-                            <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg mb-4">
+                            <button
+                                onClick={() => navigate('/checkout')}
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg mb-4"
+                            >
                                 Proceed to Checkout
                             </button>
 
