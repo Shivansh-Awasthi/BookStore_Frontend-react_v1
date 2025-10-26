@@ -60,7 +60,7 @@ const Signup = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:3000/api/users/signup', {
+            const response = await fetch(`${process.env.VITE_API_URL}/api/users/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
