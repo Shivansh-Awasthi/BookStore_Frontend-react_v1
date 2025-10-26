@@ -18,7 +18,7 @@ const HomePage = () => {
                 for (const category of categories) {
                     try {
                         const response = await fetch(
-                            `https://crazy-deals-online.onrender.com/api/books/category/${category}?page=1&limit=8`
+                            `${process.env.VITE_API_URL}/api/books/category/${category}?page=1&limit=8`
                         );
                         const data = await response.json();
 
