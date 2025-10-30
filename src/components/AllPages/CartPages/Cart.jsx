@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
     const [cart, setCart] = useState(null);
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [updatingItems, setUpdatingItems] = useState(new Set());
     const navigate = useNavigate();
 
-    // Fetch cart data
+    // Fetch user profile and cart data
     useEffect(() => {
-        const fetchCart = async () => {
+        const fetchUserAndCart = async () => {
             try {
                 setLoading(true);
                 const token = localStorage.getItem('token');
@@ -21,42 +22,81 @@ const Cart = () => {
                     return;
                 }
 
-                const response = await fetch(`${process.env.VITE_API_URL}/api/cart`, {
+                // Fetch user profile first
+                const userResponse = await fetch(`${process.env.VITE_API_URL}/api/users/profile`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
 
-                if (response.status === 401) {
+                if (userResponse.status === 401) {
                     setError('Please login to view your cart');
                     setLoading(false);
                     return;
                 }
 
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch cart: ${response.status}`);
+                if (!userResponse.ok) {
+                    throw new Error(`Failed to fetch user profile: ${userResponse.status}`);
                 }
 
-                const data = await response.json();
+                const userData = await userResponse.json();
+                if (userData.success) {
+                    setUser(userData.data.user);
+                }
 
-                if (data.success) {
-                    // The cart data structure from your API
-                    setCart(data.data);
+                // Fetch cart data
+                const cartResponse = await fetch(`${process.env.VITE_API_URL}/api/cart`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!cartResponse.ok) {
+                    throw new Error(`Failed to fetch cart: ${cartResponse.status}`);
+                }
+
+                const cartData = await cartResponse.json();
+
+                if (cartData.success) {
+                    setCart(cartData.data);
                 } else {
-                    setError(data.message || 'Failed to load cart');
+                    setError(cartData.message || 'Failed to load cart');
                 }
             } catch (err) {
-                console.error('Error fetching cart:', err);
+                console.error('Error fetching data:', err);
                 setError(err.message || 'Failed to load cart');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchCart();
+        fetchUserAndCart();
     }, []);
 
+    // Check if address is complete
+    const isAddressComplete = (userAddress) => {
+        if (!userAddress) return false;
+        return userAddress.street && userAddress.city && userAddress.state && userAddress.zipCode;
+    };
+
+    // Handle proceed to checkout
+    const handleProceedToCheckout = () => {
+        if (!user || !isAddressComplete(user.address)) {
+            // Redirect to address completion page
+            navigate('/additional-details', {
+                state: {
+                    redirectTo: '/checkout',
+                    message: 'Please complete your address information to proceed with checkout'
+                }
+            });
+        } else {
+            navigate('/checkout');
+        }
+    };
+
+    // ... (rest of your existing functions: updateQuantity, removeItem, clearCart remain the same)
     // Update quantity
     const updateQuantity = async (bookId, newQuantity) => {
         if (newQuantity < 1) return;
@@ -148,8 +188,7 @@ const Cart = () => {
         }
     };
 
-
-
+    // ... (rest of your existing loading, error, and empty cart states remain the same)
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
@@ -251,7 +290,19 @@ const Cart = () => {
                     <p className="text-gray-600 text-lg">
                         Review your items and proceed to checkout
                     </p>
-
+                    {/* Address Warning */}
+                    {user && !isAddressComplete(user.address) && (
+                        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-2xl mx-auto">
+                            <div className="flex items-center">
+                                <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-yellow-800 font-medium">
+                                    Please complete your address information to proceed with checkout
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -415,7 +466,7 @@ const Cart = () => {
 
                             {/* Checkout Button */}
                             <button
-                                onClick={() => navigate('/checkout')}
+                                onClick={handleProceedToCheckout}
                                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg mb-4"
                             >
                                 Proceed to Checkout
