@@ -16,6 +16,8 @@ import Contacts from './components/OtherPages/Contact';
 import CartAddressDetails from './components/AllPages/CartPages/CartAddiressDetails';
 import PublishBooks from './components/Admin/BooksManagement/PublishBooks';
 import UpdateBooks from './components/Admin/BooksManagement/UpdateBooks';
+import Header from './components/Header/Header';
+import SearchResults from './components/Header/SearchResults';
 
 function App() {
 
@@ -56,6 +58,14 @@ function App() {
           {/* Support Pages */}
           <Route path='/Privacy-policy' element={<Policy />} />
           <Route path='/contact-us' element={<Contacts />} />
+
+
+          {/* Search */}
+          <Route path="/search" element={<SearchResults />} />
+
+
+          {/* Temporary routes for testing purpose only */}
+          <Route path='/header' element={<Header />} />
 
 
         </Routes>
