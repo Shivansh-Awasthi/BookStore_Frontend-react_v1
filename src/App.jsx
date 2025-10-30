@@ -11,6 +11,8 @@ import SingleBookPage from './components/AllPages/SingleBook/SingleBookPage';
 import Cart from './components/AllPages/CartPages/Cart';
 import Login from './components/Admin/Login';
 import SignUp from './components/Admin/SignUp';
+import Policy from './components/OtherPages/Policy';
+import Contacts from './components/OtherPages/Contact';
 
 function App() {
 
@@ -38,6 +40,12 @@ function App() {
           {/* user authentication routes */}
           <Route path='/login' element={<Login />} />
           <Route path='/sign-up' element={<SignUp />} />
+
+
+          {/* Support Pages */}
+          <Route path='/Privacy-policy' element={<Policy />} />
+          <Route path='/contact-us' element={<Contacts />} />
+
 
         </Routes>
       </BrowserRouter>
