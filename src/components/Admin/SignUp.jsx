@@ -180,7 +180,6 @@ const Signup = () => {
                                     id="address.street"
                                     name="address.street"
                                     type="text"
-                                    required
                                     value={formData.address.street}
                                     onChange={handleChange}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
@@ -198,7 +197,6 @@ const Signup = () => {
                                         id="address.city"
                                         name="address.city"
                                         type="text"
-                                        required
                                         value={formData.address.city}
                                         onChange={handleChange}
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
@@ -214,7 +212,6 @@ const Signup = () => {
                                         id="address.state"
                                         name="address.state"
                                         type="text"
-                                        required
                                         value={formData.address.state}
                                         onChange={handleChange}
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
@@ -233,7 +230,6 @@ const Signup = () => {
                                         id="address.zipCode"
                                         name="address.zipCode"
                                         type="text"
-                                        required
                                         value={formData.address.zipCode}
                                         onChange={handleChange}
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
@@ -248,7 +244,6 @@ const Signup = () => {
                                     <select
                                         id="address.country"
                                         name="address.country"
-                                        required
                                         value={formData.address.country}
                                         onChange={handleChange}
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
