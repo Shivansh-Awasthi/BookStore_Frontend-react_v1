@@ -11,6 +11,8 @@ const SingleBookPage = () => {
     const [quantity, setQuantity] = useState(1);
     const [addingToCart, setAddingToCart] = useState(false);
     const [cartMessage, setCartMessage] = useState('');
+    const [user, setUser] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // Fetch single book by ID
     useEffect(() => {
@@ -39,6 +41,26 @@ const SingleBookPage = () => {
             fetchBook();
         }
     }, [id]);
+
+    // Check if user is admin
+    useEffect(() => {
+        const checkUserRole = () => {
+            const token = localStorage.getItem('token');
+            const userData = localStorage.getItem('user');
+
+            if (token && userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    setUser(user);
+                    setIsAdmin(user.role === 'ADMIN');
+                } catch (err) {
+                    console.error('Error parsing user data:', err);
+                }
+            }
+        };
+
+        checkUserRole();
+    }, []);
 
     // Add to Cart Function
     const handleAddToCart = async () => {
@@ -97,6 +119,11 @@ const SingleBookPage = () => {
         } finally {
             setAddingToCart(false);
         }
+    };
+
+    // Handle Edit Book (Admin only)
+    const handleEditBook = () => {
+        navigate(`/admin/books/update-book/${book._id}`);
     };
 
     // Calculate discount percentage
@@ -164,6 +191,21 @@ const SingleBookPage = () => {
                     <span>→</span>
                     <span className="text-gray-900 font-medium truncate">{book.title}</span>
                 </nav>
+
+                {/* Admin Edit Button */}
+                {isAdmin && (
+                    <div className="mb-4 flex justify-end">
+                        <button
+                            onClick={handleEditBook}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <span>Edit Book</span>
+                        </button>
+                    </div>
+                )}
 
                 {/* Cart Message */}
                 {cartMessage && (

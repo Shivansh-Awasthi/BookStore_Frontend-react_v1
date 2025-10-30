@@ -13,6 +13,9 @@ import Login from './components/Admin/Login';
 import SignUp from './components/Admin/SignUp';
 import Policy from './components/OtherPages/Policy';
 import Contacts from './components/OtherPages/Contact';
+import CartAddressDetails from './components/AllPages/CartPages/CartAddiressDetails';
+import PublishBooks from './components/Admin/BooksManagement/PublishBooks';
+import UpdateBooks from './components/Admin/BooksManagement/UpdateBooks';
 
 function App() {
 
@@ -30,11 +33,19 @@ function App() {
           <Route path='/collections/kids' element={<Kids />} />
           <Route path='/collections/biography' element={<Biography />} />
 
+
           {/* Book Detailed Page */}
           <Route path='/products/:id' element={<SingleBookPage />} />
 
+
           {/* cart page routtes */}
           <Route path='/viewcart' element={<Cart />} />
+          <Route path='/additional-details' element={<CartAddressDetails />} />
+
+
+          {/* Admin Routes */}
+          <Route path="/admin/books/publish" element={<PublishBooks />} />
+          <Route path="admin/books/update-book/:id" element={<UpdateBooks />} />
 
 
           {/* user authentication routes */}
