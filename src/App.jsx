@@ -18,6 +18,7 @@ import PublishBooks from './components/Admin/BooksManagement/PublishBooks';
 import UpdateBooks from './components/Admin/BooksManagement/UpdateBooks';
 import Header from './components/Header/Header';
 import SearchResults from './components/Header/SearchResults';
+import Category from './components/AllPages/BooksCategory/Category';
 
 function App() {
 
@@ -29,6 +30,7 @@ function App() {
 
           {/* Book Categories Routes */}
           <Route path='/' element={<HomePage />} />
+          <Route path='/category' element={<Category />} />
           <Route path='/collections/science' element={<Science />} />
           <Route path='/collections/history' element={<History />} />
           <Route path='/collections/fiction' element={<Fiction />} />
