@@ -21,8 +21,7 @@ const UpdateBooks = () => {
         country: 'India',
         publicationDate: '',
     });
-    const [images, setImages] = useState([]);
-    const [newImages, setNewImages] = useState([]);
+    const [images, setImages] = useState([{ url: '', alt: '', isPrimary: true }]);
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
     const [error, setError] = useState('');
@@ -30,6 +29,8 @@ const UpdateBooks = () => {
     const [user, setUser] = useState(null);
     const [authorized, setAuthorized] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const navigate = useNavigate();
     const { id } = useParams();
 
@@ -120,9 +121,11 @@ const UpdateBooks = () => {
                                 new Date(book.details.publicationDate).toISOString().split('T')[0] : '',
                         });
 
-                        // Set existing images
+                        // Set existing images or initialize with empty one
                         if (book.images && book.images.length > 0) {
                             setImages(book.images);
+                        } else {
+                            setImages([{ url: '', alt: '', isPrimary: true }]);
                         }
                     } else {
                         setError('Book not found');
@@ -149,48 +152,46 @@ const UpdateBooks = () => {
         setSuccess('');
     };
 
-    const handleImageChange = (e) => {
-        const files = Array.from(e.target.files);
-        const imagePreviews = files.map(file => ({
-            url: URL.createObjectURL(file),
-            alt: file.name,
-            isPrimary: newImages.length === 0 && images.length === 0, // First image is primary if no existing images
-            file: file,
-            isNew: true // Mark as new image
-        }));
+    // Handle image URL and alt text changes
+    const handleImageChange = (index, field, value) => {
+        const updatedImages = [...images];
+        updatedImages[index][field] = value;
 
-        setNewImages(prev => [...prev, ...imagePreviews]);
+        // If URL is filled and we're not at max images, add a new empty field
+        if (field === 'url' && value.trim() !== '' &&
+            index === updatedImages.length - 1 &&
+            updatedImages.length < 10) {
+            updatedImages.push({ url: '', alt: '', isPrimary: false });
+        }
+
+        setImages(updatedImages);
     };
 
-    const removeImage = (index, isNew = false) => {
-        if (isNew) {
-            setNewImages(prev => prev.filter((_, i) => i !== index));
-        } else {
-            setImages(prev => prev.filter((_, i) => i !== index));
+    // Remove an image field
+    const removeImage = (index) => {
+        if (images.length > 1) {
+            const updatedImages = images.filter((_, i) => i !== index);
+            // If we removed the primary image, set the first image as primary
+            if (images[index].isPrimary && updatedImages.length > 0) {
+                updatedImages[0].isPrimary = true;
+            }
+            setImages(updatedImages);
         }
     };
 
-    const setPrimaryImage = (index, isNew = false) => {
-        if (isNew) {
-            setNewImages(prev => prev.map((img, i) => ({
-                ...img,
-                isPrimary: i === index
-            })));
-            // Ensure no existing image is marked as primary
-            setImages(prev => prev.map(img => ({
-                ...img,
-                isPrimary: false
-            })));
-        } else {
-            setImages(prev => prev.map((img, i) => ({
-                ...img,
-                isPrimary: i === index
-            })));
-            // Ensure no new image is marked as primary
-            setNewImages(prev => prev.map(img => ({
-                ...img,
-                isPrimary: false
-            })));
+    // Set an image as primary
+    const setPrimaryImage = (index) => {
+        const updatedImages = images.map((img, i) => ({
+            ...img,
+            isPrimary: i === index
+        }));
+        setImages(updatedImages);
+    };
+
+    // Add a new empty image field
+    const addImageField = () => {
+        if (images.length < 10) {
+            setImages([...images, { url: '', alt: '', isPrimary: false }]);
         }
     };
 
@@ -219,6 +220,21 @@ const UpdateBooks = () => {
             return;
         }
 
+        // Validate images - filter out empty URLs and ensure at least one primary image
+        const validImages = images
+            .filter(img => img.url.trim() !== '')
+            .map((img, index) => ({
+                ...img,
+                // If no image is marked as primary, set the first one as primary
+                isPrimary: index === 0 ? true : img.isPrimary
+            }));
+
+        if (validImages.length === 0) {
+            setError('At least one image URL is required');
+            setLoading(false);
+            return;
+        }
+
         try {
             const token = localStorage.getItem('token');
 
@@ -229,19 +245,7 @@ const UpdateBooks = () => {
                 originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
                 stock: formData.stock ? parseInt(formData.stock) : 0,
                 tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
-                // Combine existing images and new images
-                images: [
-                    ...images.map(img => ({
-                        url: img.url,
-                        alt: img.alt,
-                        isPrimary: img.isPrimary
-                    })),
-                    ...newImages.map(img => ({
-                        url: img.url, // In real app, this would be the uploaded image URL
-                        alt: img.alt,
-                        isPrimary: img.isPrimary
-                    }))
-                ]
+                images: validImages
             };
 
             // Remove empty optional fields
@@ -264,10 +268,9 @@ const UpdateBooks = () => {
 
             if (data.success) {
                 setSuccess('Book updated successfully!');
-                // Update local images state with the response data if needed
+                // Update local images state with the response data
                 if (data.data.book.images) {
                     setImages(data.data.book.images);
-                    setNewImages([]);
                 }
             } else {
                 setError(data.message || 'Failed to update book');
@@ -277,6 +280,38 @@ const UpdateBooks = () => {
             console.error('Update book error:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Handle book deletion
+    const handleDeleteBook = async () => {
+        setDeleteLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${process.env.VITE_API_URL}/api/books/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setSuccess('Book deleted successfully!');
+                setTimeout(() => {
+                    navigate('/');
+                }, 2000);
+            } else {
+                setError(data.message || 'Failed to delete book');
+            }
+        } catch (err) {
+            setError('Network error. Please try again.');
+            console.error('Delete book error:', err);
+        } finally {
+            setDeleteLoading(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -386,6 +421,27 @@ const UpdateBooks = () => {
                         {error}
                     </div>
                 )}
+
+                {/* Delete Book Section - Separate from the form */}
+                <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-red-500">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mb-4 sm:mb-0">
+                            <h3 className="text-lg font-semibold text-red-700 mb-2">Danger Zone</h3>
+                            <p className="text-gray-600 text-sm">
+                                Once you delete this book, it cannot be recovered. This action is permanent.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShowDeleteModal(true)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>Delete Book</span>
+                        </button>
+                    </div>
+                </div>
 
                 {/* Book Form */}
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-8">
@@ -642,115 +698,123 @@ const UpdateBooks = () => {
                         {/* Images Section */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Book Images
+                                Book Images ({images.filter(img => img.url.trim() !== '').length} added, max 10)
                             </label>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Enter image URLs. A new field will automatically appear when you fill one. The first image will be used as primary by default.
+                            </p>
 
-                            {/* Existing Images */}
-                            {images.length > 0 && (
-                                <div className="mb-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Images</h4>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {images.map((image, index) => (
-                                            <div key={index} className="relative group">
-                                                <img
-                                                    src={image.url}
-                                                    alt={image.alt}
-                                                    className="w-full h-32 object-cover rounded-lg"
+                            {/* Image URL Inputs */}
+                            <div className="space-y-4">
+                                {images.map((image, index) => (
+                                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                            {/* Image URL */}
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                    Image URL {index + 1} *
+                                                </label>
+                                                <input
+                                                    type="url"
+                                                    value={image.url}
+                                                    onChange={(e) => handleImageChange(index, 'url', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                                    placeholder="https://example.com/image.jpg"
                                                 />
-                                                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setPrimaryImage(index, false)}
-                                                        className={`text-xs px-2 py-1 rounded ${image.isPrimary
-                                                                ? 'bg-green-500 text-white'
-                                                                : 'bg-white text-gray-700'
-                                                            }`}
-                                                    >
-                                                        {image.isPrimary ? 'Primary' : 'Set Primary'}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeImage(index, false)}
-                                                        className="text-xs bg-red-500 text-white px-2 py-1 rounded"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                                {image.isPrimary && (
-                                                    <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                                                        Primary
+                                            </div>
+
+                                            {/* Alt Text */}
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                    Alt Text
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={image.alt}
+                                                    onChange={(e) => handleImageChange(index, 'alt', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                                    placeholder="Book cover image"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Image Actions */}
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center space-x-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPrimaryImage(index)}
+                                                    disabled={image.isPrimary}
+                                                    className={`text-xs px-3 py-1 rounded-full ${image.isPrimary
+                                                        ? 'bg-green-500 text-white cursor-default'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                        } transition-colors`}
+                                                >
+                                                    {image.isPrimary ? '✓ Primary Image' : 'Set as Primary'}
+                                                </button>
+                                                {image.url && (
+                                                    <div className="text-xs text-gray-500">
+                                                        {image.isPrimary && '★ Primary'}
                                                     </div>
                                                 )}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
-                            {/* Add New Images */}
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                    id="image-upload"
-                                />
-                                <label
-                                    htmlFor="image-upload"
-                                    className="cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors"
-                                >
-                                    Add New Images
-                                </label>
-                                <p className="mt-2 text-sm text-gray-500">
-                                    Upload additional book images
-                                </p>
+                                            {/* Remove Button */}
+                                            {images.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeImage(index)}
+                                                    className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center space-x-1"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    <span>Remove</span>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Image Preview */}
+                                        {image.url && (
+                                            <div className="mt-3">
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                    Preview:
+                                                </label>
+                                                <div className="w-24 h-32 border border-gray-300 rounded-lg overflow-hidden">
+                                                    <img
+                                                        src={image.url}
+                                                        alt="Preview"
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik00IDE2TDEwIDEwTDE0IDE0TDIwIDhWMjBINFYxNloiIGZpbGw9IiNEOEQ5REEiLz4KPGNpcmNsZSBjeD0iOC41IiBjeT0iNy41IiByPSIyLjUiIGZpbGw9IiNBOUE5QTkiLz4KPC9zdmc+';
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
 
-                            {/* New Image Previews */}
-                            {newImages.length > 0 && (
-                                <div className="mt-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Images</h4>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {newImages.map((image, index) => (
-                                            <div key={index} className="relative group">
-                                                <img
-                                                    src={image.url}
-                                                    alt={image.alt}
-                                                    className="w-full h-32 object-cover rounded-lg"
-                                                />
-                                                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setPrimaryImage(index, true)}
-                                                        className={`text-xs px-2 py-1 rounded ${image.isPrimary
-                                                                ? 'bg-green-500 text-white'
-                                                                : 'bg-white text-gray-700'
-                                                            }`}
-                                                    >
-                                                        {image.isPrimary ? 'Primary' : 'Set Primary'}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeImage(index, true)}
-                                                        className="text-xs bg-red-500 text-white px-2 py-1 rounded"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                                {image.isPrimary && (
-                                                    <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                                                        Primary
-                                                    </div>
-                                                )}
-                                                <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                                                    New
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                            {/* Add More Images Button */}
+                            {images.length < 10 && (
+                                <button
+                                    type="button"
+                                    onClick={addImageField}
+                                    className="mt-4 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors flex items-center space-x-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    <span>Add Another Image</span>
+                                </button>
+                            )}
+
+                            {/* Max Images Message */}
+                            {images.length >= 10 && (
+                                <p className="mt-2 text-sm text-gray-500 text-center">
+                                    Maximum 10 images reached
+                                </p>
                             )}
                         </div>
 
@@ -774,7 +838,7 @@ const UpdateBooks = () => {
                     <div className="mt-8 flex justify-end space-x-4">
                         <button
                             type="button"
-                            onClick={() => navigate('/admin')}
+                            onClick={() => navigate(-1)}
                             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                         >
                             Cancel
@@ -795,6 +859,48 @@ const UpdateBooks = () => {
                         </button>
                     </div>
                 </form>
+
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Delete Book</h3>
+                                <p className="text-gray-600">
+                                    Are you sure you want to delete <strong>"{formData.title}"</strong>? This action cannot be undone and all book data will be permanently removed.
+                                </p>
+                            </div>
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                    disabled={deleteLoading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteBook}
+                                    disabled={deleteLoading}
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                >
+                                    {deleteLoading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        'Delete Book'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

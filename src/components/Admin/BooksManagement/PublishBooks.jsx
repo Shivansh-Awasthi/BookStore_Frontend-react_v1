@@ -21,7 +21,7 @@ const PublishBooks = () => {
         country: 'India',
         publicationDate: '',
     });
-    const [images, setImages] = useState([]);
+    const [images, setImages] = useState([{ url: '', alt: '', isPrimary: true }]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -90,29 +90,47 @@ const PublishBooks = () => {
         setSuccess('');
     };
 
-    const handleImageChange = (e) => {
-        const files = Array.from(e.target.files);
-        // In a real app, you'd upload these files to cloud storage and get URLs
-        // For now, we'll create object URLs for preview
-        const imagePreviews = files.map(file => ({
-            url: URL.createObjectURL(file),
-            alt: file.name,
-            isPrimary: images.length === 0, // First image is primary by default
-            file: file // Store the actual file for upload
-        }));
+    // Handle image URL and alt text changes
+    const handleImageChange = (index, field, value) => {
+        const updatedImages = [...images];
+        updatedImages[index][field] = value;
 
-        setImages(prev => [...prev, ...imagePreviews]);
+        // If URL is filled and we're not at max images, add a new empty field
+        if (field === 'url' && value.trim() !== '' &&
+            index === updatedImages.length - 1 &&
+            updatedImages.length < 10) {
+            updatedImages.push({ url: '', alt: '', isPrimary: false });
+        }
+
+        setImages(updatedImages);
     };
 
+    // Remove an image field
     const removeImage = (index) => {
-        setImages(prev => prev.filter((_, i) => i !== index));
+        if (images.length > 1) {
+            const updatedImages = images.filter((_, i) => i !== index);
+            // If we removed the primary image, set the first image as primary
+            if (images[index].isPrimary && updatedImages.length > 0) {
+                updatedImages[0].isPrimary = true;
+            }
+            setImages(updatedImages);
+        }
     };
 
+    // Set an image as primary
     const setPrimaryImage = (index) => {
-        setImages(prev => prev.map((img, i) => ({
+        const updatedImages = images.map((img, i) => ({
             ...img,
             isPrimary: i === index
-        })));
+        }));
+        setImages(updatedImages);
+    };
+
+    // Add a new empty image field
+    const addImageField = () => {
+        if (images.length < 10) {
+            setImages([...images, { url: '', alt: '', isPrimary: false }]);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -140,6 +158,21 @@ const PublishBooks = () => {
             return;
         }
 
+        // Validate images - filter out empty URLs and ensure at least one primary image
+        const validImages = images
+            .filter(img => img.url.trim() !== '')
+            .map((img, index) => ({
+                ...img,
+                // If no image is marked as primary, set the first one as primary
+                isPrimary: index === 0 ? true : img.isPrimary
+            }));
+
+        if (validImages.length === 0) {
+            setError('At least one image URL is required');
+            setLoading(false);
+            return;
+        }
+
         try {
             const token = localStorage.getItem('token');
 
@@ -150,11 +183,7 @@ const PublishBooks = () => {
                 originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
                 stock: formData.stock ? parseInt(formData.stock) : 0,
                 tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
-                images: images.map(img => ({
-                    url: img.url, // In real app, this would be the uploaded image URL
-                    alt: img.alt,
-                    isPrimary: img.isPrimary
-                }))
+                images: validImages
             };
 
             // Remove empty optional fields
@@ -196,7 +225,7 @@ const PublishBooks = () => {
                     country: 'India',
                     publicationDate: '',
                 });
-                setImages([]);
+                setImages([{ url: '', alt: '', isPrimary: true }]);
             } else {
                 setError(data.message || 'Failed to publish book');
             }
@@ -528,63 +557,126 @@ const PublishBooks = () => {
                             />
                         </div>
 
-                        {/* Images Upload */}
+                        {/* Images Section */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Book Images
+                                Book Images ({images.filter(img => img.url.trim() !== '').length} added, max 10)
                             </label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                    id="image-upload"
-                                />
-                                <label
-                                    htmlFor="image-upload"
-                                    className="cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors"
-                                >
-                                    Choose Images
-                                </label>
-                                <p className="mt-2 text-sm text-gray-500">
-                                    Upload book cover and additional images
-                                </p>
-                            </div>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Enter image URLs. A new field will automatically appear when you fill one. The first image will be used as primary by default.
+                            </p>
 
-                            {/* Image Previews */}
-                            {images.length > 0 && (
-                                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {images.map((image, index) => (
-                                        <div key={index} className="relative group">
-                                            <img
-                                                src={image.url}
-                                                alt={image.alt}
-                                                className="w-full h-32 object-cover rounded-lg"
-                                            />
-                                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
+                            {/* Image URL Inputs */}
+                            <div className="space-y-4">
+                                {images.map((image, index) => (
+                                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                            {/* Image URL */}
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                    Image URL {index + 1} *
+                                                </label>
+                                                <input
+                                                    type="url"
+                                                    value={image.url}
+                                                    onChange={(e) => handleImageChange(index, 'url', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                                    placeholder="https://example.com/image.jpg"
+                                                />
+                                            </div>
+
+                                            {/* Alt Text */}
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                    Alt Text
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={image.alt}
+                                                    onChange={(e) => handleImageChange(index, 'alt', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                                    placeholder="Book cover image"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Image Actions */}
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center space-x-4">
                                                 <button
                                                     type="button"
                                                     onClick={() => setPrimaryImage(index)}
-                                                    className={`text-xs px-2 py-1 rounded ${image.isPrimary
-                                                            ? 'bg-green-500 text-white'
-                                                            : 'bg-white text-gray-700'
-                                                        }`}
+                                                    disabled={image.isPrimary}
+                                                    className={`text-xs px-3 py-1 rounded-full ${image.isPrimary
+                                                        ? 'bg-green-500 text-white cursor-default'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                        } transition-colors`}
                                                 >
-                                                    {image.isPrimary ? 'Primary' : 'Set Primary'}
+                                                    {image.isPrimary ? '✓ Primary Image' : 'Set as Primary'}
                                                 </button>
+                                                {image.url && (
+                                                    <div className="text-xs text-gray-500">
+                                                        {image.isPrimary && '★ Primary'}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Remove Button */}
+                                            {images.length > 1 && (
                                                 <button
                                                     type="button"
                                                     onClick={() => removeImage(index)}
-                                                    className="text-xs bg-red-500 text-white px-2 py-1 rounded"
+                                                    className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center space-x-1"
                                                 >
-                                                    Remove
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    <span>Remove</span>
                                                 </button>
-                                            </div>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
+
+                                        {/* Image Preview */}
+                                        {image.url && (
+                                            <div className="mt-3">
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                    Preview:
+                                                </label>
+                                                <div className="w-24 h-32 border border-gray-300 rounded-lg overflow-hidden">
+                                                    <img
+                                                        src={image.url}
+                                                        alt="Preview"
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik00IDE2TDEwIDEwTDE0IDE0TDIwIDhWMjBINFYxNloiIGZpbGw9IiNEOEQ5REEiLz4KPGNpcmNsZSBjeD0iOC41IiBjeT0iNy41IiByPSIyLjUiIGZpbGw9IiNBOUE5QTkiLz4KPC9zdmc+';
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Add More Images Button */}
+                            {images.length < 10 && (
+                                <button
+                                    type="button"
+                                    onClick={addImageField}
+                                    className="mt-4 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors flex items-center space-x-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    <span>Add Another Image</span>
+                                </button>
+                            )}
+
+                            {/* Max Images Message */}
+                            {images.length >= 10 && (
+                                <p className="mt-2 text-sm text-gray-500 text-center">
+                                    Maximum 10 images reached
+                                </p>
                             )}
                         </div>
 
