@@ -114,7 +114,7 @@ const SearchResults = () => {
 
     const renderBookCard = (book) => (
         <div key={book._id || book.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <Link to={`/books/${book._id || book.id}`} className="block">
+            <Link to={`/products/${book._id || book.id}`} className="block">
                 <div className="aspect-[3/4] bg-gray-200 rounded-t-lg overflow-hidden">
                     <img
                         src={book.images?.[0]?.url || '/book-placeholder.png'}
@@ -168,7 +168,7 @@ const SearchResults = () => {
 
     const renderBookListItem = (book) => (
         <div key={book._id || book.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <Link to={`/books/${book._id || book.id}`} className="block">
+            <Link to={`/products/${book._id || book.id}`} className="block">
                 <div className="flex p-4">
                     <div className="w-24 h-32 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                         <img
@@ -245,8 +245,8 @@ const SearchResults = () => {
                     key={i}
                     onClick={() => handlePageChange(i)}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${currentPage === i
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
                     {i}

@@ -189,7 +189,7 @@ const Header = () => {
                                             {searchResults.map((book) => (
                                                 <a
                                                     key={book._id || book.id}
-                                                    href={`/books/${book._id || book.id}`}
+                                                    href={`/products/${book._id || book.id}`}
                                                     className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0"
                                                 >
                                                     <img
@@ -220,7 +220,7 @@ const Header = () => {
                                             ))}
                                             <div className="px-4 py-3 border-t border-gray-200">
                                                 <a
-                                                    href={`/books?search=${encodeURIComponent(searchQuery)}`}
+                                                    href={`/search?q=${encodeURIComponent(searchQuery)}`}
                                                     className="text-blue-600 hover:text-blue-800 text-sm font-medium text-center block"
                                                 >
                                                     View all results
