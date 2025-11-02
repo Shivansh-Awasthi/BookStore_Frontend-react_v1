@@ -18,6 +18,7 @@ import PublishBooks from './components/Admin/BooksManagement/PublishBooks';
 import UpdateBooks from './components/Admin/BooksManagement/UpdateBooks';
 import Header from './components/Header/Header';
 import SearchResults from './components/Header/SearchResults';
+import Category from './components/AllPages/BooksCategory/Category';
 
 // Layout component that includes the Header
 const Layout = ({ children }) => {
@@ -43,6 +44,11 @@ function App() {
           <Route path='/collections/science' element={
             <Layout>
               <Science />
+            </Layout>
+          } />
+          <Route path='/category' element={
+            <Layout>
+              <Category />
             </Layout>
           } />
           <Route path='/collections/history' element={
