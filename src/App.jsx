@@ -18,61 +18,112 @@ import PublishBooks from './components/Admin/BooksManagement/PublishBooks';
 import UpdateBooks from './components/Admin/BooksManagement/UpdateBooks';
 import Header from './components/Header/Header';
 import SearchResults from './components/Header/SearchResults';
-import Category from './components/AllPages/BooksCategory/Category';
+
+// Layout component that includes the Header
+const Layout = ({ children }) => {
+  return (
+    <div>
+      <Header />
+      {children}
+    </div>
+  );
+};
 
 function App() {
-
   return (
     <div>
       <BrowserRouter>
         <Routes>
-
-
-          {/* Book Categories Routes */}
-          <Route path='/' element={<HomePage />} />
-          <Route path='/category' element={<Category />} />
-          <Route path='/collections/science' element={<Science />} />
-          <Route path='/collections/history' element={<History />} />
-          <Route path='/collections/fiction' element={<Fiction />} />
-          <Route path='/collections/kids' element={<Kids />} />
-          <Route path='/collections/biography' element={<Biography />} />
-
+          {/* Routes with Header */}
+          <Route path='/' element={
+            <Layout>
+              <HomePage />
+            </Layout>
+          } />
+          <Route path='/collections/science' element={
+            <Layout>
+              <Science />
+            </Layout>
+          } />
+          <Route path='/collections/history' element={
+            <Layout>
+              <History />
+            </Layout>
+          } />
+          <Route path='/collections/fiction' element={
+            <Layout>
+              <Fiction />
+            </Layout>
+          } />
+          <Route path='/collections/kids' element={
+            <Layout>
+              <Kids />
+            </Layout>
+          } />
+          <Route path='/collections/biography' element={
+            <Layout>
+              <Biography />
+            </Layout>
+          } />
 
           {/* Book Detailed Page */}
-          <Route path='/products/:id' element={<SingleBookPage />} />
+          <Route path='/products/:id' element={
+            <Layout>
+              <SingleBookPage />
+            </Layout>
+          } />
 
+          {/* Cart page routes */}
+          <Route path='/viewcart' element={
+            <Layout>
+              <Cart />
+            </Layout>
+          } />
+          <Route path='/additional-details' element={
+            <Layout>
+              <CartAddressDetails />
+            </Layout>
+          } />
 
-          {/* cart page routtes */}
-          <Route path='/viewcart' element={<Cart />} />
-          <Route path='/additional-details' element={<CartAddressDetails />} />
-
-
-          {/* Admin Routes */}
+          {/* Admin Routes - You might want to exclude Header from these */}
           <Route path="/admin/books/publish" element={<PublishBooks />} />
           <Route path="admin/books/update-book/:id" element={<UpdateBooks />} />
 
-
-          {/* user authentication routes */}
-          <Route path='/login' element={<Login />} />
-          <Route path='/sign-up' element={<SignUp />} />
-
+          {/* User authentication routes */}
+          <Route path='/login' element={
+            <Layout>
+              <Login />
+            </Layout>
+          } />
+          <Route path='/sign-up' element={
+            <Layout>
+              <SignUp />
+            </Layout>
+          } />
 
           {/* Support Pages */}
-          <Route path='/Privacy-policy' element={<Policy />} />
-          <Route path='/contact-us' element={<Contacts />} />
-
+          <Route path='/Privacy-policy' element={
+            <Layout>
+              <Policy />
+            </Layout>
+          } />
+          <Route path='/contact-us' element={
+            <Layout>
+              <Contacts />
+            </Layout>
+          } />
 
           {/* Search */}
-          <Route path="/search" element={<SearchResults />} />
+          <Route path="/search" element={
+            <Layout>
+              <SearchResults />
+            </Layout>
+          } />
 
-
-          {/* Temporary routes for testing purpose only */}
-          <Route path='/header' element={<Header />} />
-
-
+          {/* Remove temporary header route since it's now included everywhere */}
+          {/* <Route path='/header' element={<Header />} /> */}
         </Routes>
       </BrowserRouter>
-
     </div>
   )
 }
