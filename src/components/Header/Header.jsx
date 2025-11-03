@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, X, Menu, BookOpen, Users, Mail, Home, Book, UserPen, Building } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
     const [isSearchActive, setIsSearchActive] = useState(false);
@@ -110,12 +111,14 @@ const Header = () => {
                 {/* Main Header */}
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0 flex items-center">
-                            <BookOpen className="h-8 w-8 text-blue-600" />
-                            <span className="ml-2 text-xl font-bold text-gray-900">BookStore</span>
+                    <Link to="/">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0 flex items-center">
+                                <BookOpen className="h-8 w-8 text-blue-600" />
+                                <span className="ml-2 text-xl font-bold text-gray-900">BookStore</span>
+                            </div>
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Desktop Navigation - Hidden when search is active */}
                     {!isSearchActive && (
