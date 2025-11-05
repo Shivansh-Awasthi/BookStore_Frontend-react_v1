@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, X, Menu, BookOpen, Users, Mail, Home, Book, UserPen, Building } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+
+
 
 const Header = () => {
     const [isSearchActive, setIsSearchActive] = useState(false);
@@ -12,6 +15,8 @@ const Header = () => {
     const searchRef = useRef(null);
     const inputRef = useRef(null);
 
+
+    const navigate = useNavigate();
     // Debounced search function
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -98,11 +103,11 @@ const Header = () => {
 
     const navigationItems = [
         { name: 'Home', href: '/', icon: Home },
-        { name: 'Books', href: '/books', icon: Book },
-        { name: 'Writers', href: '/writers', icon: UserPen },
-        { name: 'Publishers', href: '/publishers', icon: Building },
-        { name: 'About Us', href: '/about', icon: Users },
-        { name: 'Contact Us', href: '/contact', icon: Mail },
+        { name: 'Books', href: '/categories', icon: Book },
+        // { name: 'Writers', href: '/writers', icon: UserPen },
+        { name: 'Policy', href: '/privacy-policy', icon: Building },
+        { name: 'About Us', href: '/about-us', icon: Users },
+        { name: 'Contact Us', href: '/contact-us', icon: Mail },
     ];
 
     return (
@@ -122,7 +127,7 @@ const Header = () => {
 
                     {/* Desktop Navigation - Hidden when search is active */}
                     {!isSearchActive && (
-                        <nav className="hidden md:flex items-center space-x-8">
+                        <nav className="hidden md:flex items-center space-x-8 ml-24">
                             {navigationItems.map((item) => {
                                 const Icon = item.icon;
                                 return (
@@ -243,7 +248,7 @@ const Header = () => {
                         {!isSearchActive && (
                             <>
                                 {/* Cart Icon */}
-                                <button className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors duration-200">
+                                <button onClick={() => navigate("/viewcart")} className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors duration-200">
                                     <ShoppingCart className="h-5 w-5" />
                                     <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                         0
@@ -251,7 +256,7 @@ const Header = () => {
                                 </button>
 
                                 {/* Login/User Icon */}
-                                <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors duration-200">
+                                <button onClick={() => navigate("/profile")} className="p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors duration-200">
                                     <User className="h-5 w-5" />
                                 </button>
 

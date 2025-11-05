@@ -15,6 +15,7 @@ import Header from './components/Header/Header';
 import SearchResults from './components/Header/SearchResults';
 import Category from './components/AllPages/BooksCategory/Category';
 import BookCategory from './components/AllPages/BooksCategory/BookCategory';
+import AboutUs from './components/OtherPages/AboutUs';
 
 
 // Layout component that includes the Header
@@ -98,6 +99,12 @@ function App() {
           <Route path='/contact-us' element={
             <Layout>
               <Contacts />
+            </Layout>
+          } />
+
+          <Route path='/about-us' element={
+            <Layout>
+              <AboutUs />
             </Layout>
           } />
 

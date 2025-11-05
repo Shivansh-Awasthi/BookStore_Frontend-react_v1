@@ -73,21 +73,12 @@ const BookCategory = () => {
                     <span className="text-lg font-bold text-gradient bg-gradient-to-r from-blue-600 to-cyan-600">
                         ₹{book.price}
                     </span>
-                    <div className="flex items-center">
-                        <div className="flex text-yellow-400 text-xs">
-                            {'★'.repeat(Math.floor(book.ratings.average) || 0)}
-                            {'☆'.repeat(5 - Math.floor(book.ratings.average) || 5)}
-                        </div>
-                        <span className="text-gray-500 text-xs ml-1">({book.ratings.count})</span>
-                    </div>
+
                 </div>
 
                 <div className="flex gap-2">
-                    <button className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-2 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105">
-                        Add to Cart
-                    </button>
-                    <button className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-300">
-                        ♡
+                    <button onClick={() => navigate(`/products/${book._id}`)} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-2 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105">
+                        View Book
                     </button>
                 </div>
             </div>
@@ -212,21 +203,6 @@ const BookCategory = () => {
                             </h3>
                             <p className="text-gray-600">Page {currentPage} of {totalPages}</p>
                         </div>
-                        <div className="flex gap-4 mt-4 sm:mt-0">
-                            <select className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option>Sort by: Newest</option>
-                                <option>Sort by: Price Low to High</option>
-                                <option>Sort by: Price High to Low</option>
-                                <option>Sort by: Rating</option>
-                            </select>
-                            <select className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option>Format: All</option>
-                                <option>Hardcover</option>
-                                <option>Paperback</option>
-                                <option>E-book</option>
-                                <option>Audiobook</option>
-                            </select>
-                        </div>
                     </div>
                 </div>
 
@@ -254,25 +230,7 @@ const BookCategory = () => {
                     </div>
                 )}
 
-                {/* Science Categories */}
-                <div className="mt-16">
-                    <h3 className="text-3xl font-bold text-center text-gray-800 mb-8">
-                        Science Subcategories
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {['Physics', 'Biology', 'Chemistry', 'Astronomy', 'Mathematics', 'Technology', 'Environment', 'Medicine'].map((subcat) => (
-                            <div
-                                key={subcat}
-                                className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border-2 border-transparent hover:border-blue-500"
-                            >
-                                <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white text-lg">
-                                    {subcat.charAt(0)}
-                                </div>
-                                <h4 className="font-semibold text-gray-800">{subcat}</h4>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+
 
                 {/* Call to Action */}
                 <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl p-8 text-center text-white mt-16 shadow-2xl">
@@ -295,22 +253,6 @@ const BookCategory = () => {
                 </div>
             </div>
 
-            {/* Footer */}
-            <footer className="bg-gray-800 text-white py-12 mt-16">
-                <div className="max-w-7xl mx-auto px-4 text-center">
-                    <h3 className="text-2xl font-bold mb-4">Science Books Collection</h3>
-                    <p className="text-gray-400 mb-6">
-                        Exploring the frontiers of knowledge - Innovate, Discover, and Learn
-                    </p>
-                    <div className="flex justify-center space-x-6 text-sm text-gray-400">
-                        <span>© 2024 Crazy Deals Online</span>
-                        <span>•</span>
-                        <span>Privacy Policy</span>
-                        <span>•</span>
-                        <span>Terms of Service</span>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 };
