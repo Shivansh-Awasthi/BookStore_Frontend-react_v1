@@ -16,14 +16,17 @@ import SearchResults from './components/Header/SearchResults';
 import Category from './components/AllPages/BooksCategory/Category';
 import BookCategory from './components/AllPages/BooksCategory/BookCategory';
 import AboutUs from './components/OtherPages/AboutUs';
+import Footer from './components/Header/Footer'; // Import the Footer component
 
-
-// Layout component that includes the Header
+// Layout component that includes the Header and Footer
 const Layout = ({ children }) => {
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      {children}
+      <main className="flex-grow">
+        {children}
+      </main>
+      <Footer />
     </div>
   );
 };
@@ -33,14 +36,12 @@ function App() {
     <div>
       <BrowserRouter>
         <Routes>
-          {/* Routes with Header */}
+          {/* Routes with Header and Footer */}
           <Route path='/' element={
             <Layout>
               <HomePage />
             </Layout>
           } />
-
-          {/* Dynamic Category Route - This should match /collections/anything */}
 
           {/* Categories Listing Page */}
           <Route path='/categories' element={
@@ -74,7 +75,7 @@ function App() {
             </Layout>
           } />
 
-          {/* Admin Routes */}
+          {/* Admin Routes - No Header/Footer */}
           <Route path="/admin/books/publish" element={<PublishBooks />} />
           <Route path="/admin/books/update-book/:id" element={<UpdateBooks />} />
 

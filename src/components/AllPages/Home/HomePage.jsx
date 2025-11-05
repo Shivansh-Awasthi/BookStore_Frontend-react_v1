@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Search, ShoppingBag, ChevronLeft, ChevronRight, Star, Clock, Eye } from 'lucide-react';
-import Footer from '../../Header/Footer';
 
 const HomePage = () => {
     const [booksByCategory, setBooksByCategory] = useState({});
@@ -475,7 +474,6 @@ const HomePage = () => {
                 </div>
             </section>
 
-            <Footer />
         </div>
     );
 };

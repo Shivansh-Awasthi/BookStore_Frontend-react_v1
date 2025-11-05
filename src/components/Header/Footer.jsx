@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
+
+    const navigate = useNavigate();
     return (
         <div>
             <footer className="bg-white border-t border-gray-200 px-8 py-12">
@@ -13,7 +16,7 @@ const Footer = () => {
                     <div>
                         <h4 className="font-bold text-navy mb-4">Company</h4>
                         <ul className="space-y-2 text-sm text-gray-600">
-                            <li><button className="hover:text-navy">About</button></li>
+                            <li><button onClick={() => navigate("/about-us")} className="hover:text-navy">About</button></li>
                             <li><button className="hover:text-navy">Blog</button></li>
                             <li><button className="hover:text-navy">Brands</button></li>
                         </ul>
