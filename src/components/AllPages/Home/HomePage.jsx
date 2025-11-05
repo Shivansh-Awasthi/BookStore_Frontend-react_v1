@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Search, ShoppingBag, ChevronLeft, ChevronRight, Star, Clock } from 'lucide-react';
+import { Heart, Search, ShoppingBag, ChevronLeft, ChevronRight, Star, Clock, Eye } from 'lucide-react';
 import Footer from '../../Header/Footer';
 
 const HomePage = () => {
     const [booksByCategory, setBooksByCategory] = useState({});
+    const [latestBooks, setLatestBooks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [booksLoading, setBooksLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
+    const [currentSlide, setCurrentSlide] = useState(0);
     const navigate = useNavigate();
 
     // Categories to display with their routes and images
@@ -45,14 +46,6 @@ const HomePage = () => {
         }
     ];
 
-    const trendingBooks = [
-        { id: 1, title: "When Famous Meets Fluffy", author: "Aisha", price: "₹12.99", image: 'bg-blue-200' },
-        { id: 2, title: "Ikigai", author: "Héctor García & Francesc Miralles", price: "₹12.00", image: 'bg-cyan-200' },
-        { id: 3, title: "Neverwhere", author: "Neil Gaiman", price: "₹10.00", image: 'bg-gray-800' },
-        { id: 4, title: "The Order of Time", author: "Carlo Rovelli", price: "₹14.00", image: 'bg-purple-400' },
-        { id: 5, title: "We Are Not Here", author: "Various", price: "₹20.00", image: 'bg-orange-200' },
-    ];
-
     const audioBooks = [
         { id: 1, title: "The sky between you and me", author: "S. C. Lally", duration: "58 hrs 24 mins" },
         { id: 2, title: "Normal People", author: "Sally Rooney", duration: "4 hrs 13 mins" },
@@ -78,6 +71,28 @@ const HomePage = () => {
             rating: 5,
         },
     ];
+
+    // Fetch latest books
+    const fetchLatestBooks = async () => {
+        try {
+            setBooksLoading(true);
+            const response = await fetch(
+                `${process.env.VITE_API_URL}/api/books?page=1&limit=18&sort=createdAt&order=desc`
+            );
+            const data = await response.json();
+
+            if (data.success) {
+                setLatestBooks(data.data.books || []);
+            } else {
+                throw new Error(data.message || 'Failed to fetch latest books');
+            }
+        } catch (err) {
+            console.error('Error fetching latest books:', err);
+            setError('Failed to load latest books');
+        } finally {
+            setBooksLoading(false);
+        }
+    };
 
     // Fetch books for each category
     useEffect(() => {
@@ -111,32 +126,64 @@ const HomePage = () => {
         };
 
         fetchBooksByCategory();
+        fetchLatestBooks();
     }, []);
 
-    // Book Card Component
-    const BookCard = ({ book }) => (
-        <div
-            className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition cursor-pointer"
-            onClick={() => navigate(`/products/${book._id}`)}
-        >
-            <img
-                src={book.images.find(img => img.isPrimary)?.url || book.images[0]?.url}
-                alt={book.images.find(img => img.isPrimary)?.alt || book.title}
-                className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-                <h3 className="font-bold text-navy mb-1 text-sm">{book.title}</h3>
-                <p className="text-xs text-gray-600 mb-2">{book.author}</p>
-                <p className="font-bold text-navy mb-3">₹{book.price}</p>
-                <button
-                    className="w-full bg-navy text-white py-2 rounded text-sm font-medium hover:bg-opacity-90"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('Add to cart:', book._id);
-                    }}
-                >
-                    Add to bag
-                </button>
+    // Slider navigation
+    const nextSlide = () => {
+        setCurrentSlide((prev) => (prev + 1) % 3); // 3 slides for 18 books (6 per slide)
+    };
+
+    const prevSlide = () => {
+        setCurrentSlide((prev) => (prev - 1 + 3) % 3);
+    };
+
+    // Get current slide books
+    const getCurrentSlideBooks = () => {
+        const startIndex = currentSlide * 6;
+        const endIndex = startIndex + 6;
+        return latestBooks.slice(startIndex, endIndex);
+    };
+
+    // Slim Book Card Component for Latest Books
+    const SlimBookCard = ({ book }) => (
+        <div className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition cursor-pointer flex flex-col h-full">
+            <div className="relative">
+                <img
+                    src={book.images?.find(img => img.isPrimary)?.url || book.images?.[0]?.url || '/book-placeholder.jpg'}
+                    alt={book.images?.find(img => img.isPrimary)?.alt || book.title}
+                    className="w-full h-40 object-cover" // Slimmer image height
+                />
+                <div className="absolute top-2 right-2 bg-navy text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    {book.format || 'Paperback'}
+                </div>
+            </div>
+
+            <div className="p-3 flex-1 flex flex-col">
+                <h3 className="font-bold text-navy mb-1 text-sm line-clamp-2 leading-tight">
+                    {book.title}
+                </h3>
+                <p className="text-xs text-gray-600 mb-2 line-clamp-1">{book.author}</p>
+
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-bold text-navy">₹{book.price}</span>
+                    {book.originalPrice && book.originalPrice > book.price && (
+                        <span className="text-xs text-gray-500 line-through">₹{book.originalPrice}</span>
+                    )}
+                </div>
+
+                <div className="mt-auto space-y-2">
+                    <button
+                        className="w-full border border-navy text-navy py-2 rounded text-sm font-medium hover:bg-navy hover:text-white transition-colors flex items-center justify-center gap-1"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/products/${book._id}`);
+                        }}
+                    >
+                        <Eye size={14} />
+                        View Book
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -254,58 +301,104 @@ const HomePage = () => {
                 </div>
             </section>
 
-            {/* Trending Books */}
+            {/* Latest Books Slider */}
             <section className="px-8 py-12">
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-3xl font-bold text-navy">Trending Books</h2>
+                    <h2 className="text-3xl font-bold text-navy">Latest Books</h2>
                     <div className="flex gap-3">
-                        <button className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300">
+                        <button
+                            className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                            onClick={prevSlide}
+                        >
                             <ChevronLeft size={18} />
                         </button>
-                        <button className="w-10 h-10 bg-navy text-white rounded-full flex items-center justify-center hover:bg-opacity-90">
+                        <button
+                            className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                            onClick={nextSlide}
+                        >
                             <ChevronRight size={18} />
                         </button>
                     </div>
                 </div>
-                <div className="grid grid-cols-5 gap-6">
-                    {trendingBooks.map(book => (
-                        <div key={book.id} className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition">
-                            <div className={`${book.image} h-48 flex items-center justify-center text-4xl`}></div>
-                            <div className="p-4">
-                                <h3 className="font-bold text-navy mb-1 text-sm">{book.title}</h3>
-                                <p className="text-xs text-gray-600 mb-2">{book.author}</p>
-                                <p className="font-bold text-navy mb-3">{book.price}</p>
-                                <button className="w-full bg-navy text-white py-2 rounded text-sm font-medium hover:bg-opacity-90">Add to bag</button>
-                            </div>
+
+                {booksLoading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy"></div>
+                    </div>
+                ) : latestBooks.length > 0 ? (
+                    <div className="relative">
+                        {/* Slide Container - Exact grid from your example */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                            {getCurrentSlideBooks().map((book) => (
+                                <div
+                                    key={book._id}
+                                    className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition cursor-pointer flex flex-col h-full"
+                                    onClick={() => navigate(`/products/${book._id}`)}
+                                >
+                                    {/* Image Container - Exact styling from your example */}
+                                    <div className="relative aspect-[3/4] bg-gray-100 flex items-center justify-center p-4">
+                                        <img
+                                            src={book.images?.find(img => img.isPrimary)?.url || book.images?.[0]?.url || '/book-placeholder.jpg'}
+                                            alt={book.images?.find(img => img.isPrimary)?.alt || book.title}
+                                            className="w-full h-full object-contain"
+                                        />
+                                        {/* Format Badge */}
+                                        <div className="absolute top-2 right-2 bg-navy text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                            {book.format || 'Paperback'}
+                                        </div>
+                                    </div>
+
+                                    {/* Content - Exact styling from your example */}
+                                    <div className="p-4 flex-1 flex flex-col">
+                                        <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-2 leading-tight">
+                                            {book.title}
+                                        </h3>
+                                        <p className="text-gray-600 text-xs mb-3 line-clamp-1">{book.author}</p>
+
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-lg font-bold text-gray-900">₹{book.price}</span>
+                                            {book.originalPrice && book.originalPrice > book.price && (
+                                                <span className="text-sm text-gray-500 line-through">₹{book.originalPrice}</span>
+                                            )}
+                                        </div>
+
+                                        {/* Buttons - Styled to match your example */}
+                                        <div className="mt-auto space-y-2">
+                                            <button
+                                                className="w-full border border-gray-300 text-gray-700 py-2 rounded text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/products/${book._id}`);
+                                                }}
+                                            >
+                                                <Eye size={14} />
+                                                View Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+
+                        {/* Slide Indicators */}
+                        <div className="flex justify-center mt-8 space-x-2">
+                            {[0, 1, 2].map((index) => (
+                                <button
+                                    key={index}
+                                    className={`w-3 h-3 rounded-full transition-colors ${currentSlide === index ? 'bg-navy' : 'bg-gray-300'
+                                        }`}
+                                    onClick={() => setCurrentSlide(index)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-12 text-gray-500">
+                        No latest books available
+                    </div>
+                )}
             </section>
 
-            {/* Audio Books */}
-            <section className="px-8 py-12">
-                <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-3xl font-bold text-navy">Audio Books</h2>
-                    <button className="text-navy font-medium hover:underline">
-                        Show All →
-                    </button>
-                </div>
-                <div className="grid grid-cols-3 gap-8">
-                    {audioBooks.map(book => (
-                        <div key={book.id} className="flex gap-4 bg-white p-4 rounded-lg hover:shadow-lg transition">
-                            <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0"></div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-navy text-sm mb-1">{book.title}</h3>
-                                <p className="text-xs text-gray-600 mb-2">{book.author}</p>
-                                <div className="flex items-center gap-1 text-xs text-gray-600">
-                                    <Clock size={14} />
-                                    {book.duration}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
 
             {/* Quote Section */}
             <section className="bg-black text-white px-8 py-12 my-12 rounded-2xl mx-8">
@@ -322,17 +415,17 @@ const HomePage = () => {
                 <div className="bg-teal-600 rounded-2xl p-8 text-white">
                     <h3 className="text-xl font-bold mb-2">New Publications</h3>
                     <p className="text-sm mb-4">Discover the latest releases</p>
-                    <button className="text-white underline text-sm font-medium">Show more →</button>
+                    <button onClick={() => navigate("/categories")} className="text-white underline text-sm font-medium">Show more →</button>
                 </div>
                 <div className="bg-blue-900 rounded-2xl p-8 text-white">
                     <h3 className="text-xl font-bold mb-2">Sale on History books</h3>
                     <p className="text-sm mb-4">Enjoy special discounts</p>
-                    <button className="text-white underline text-sm font-medium">Shop now →</button>
+                    <button onClick={() => navigate("/collections/history")} className="text-white underline text-sm font-medium">Shop now →</button>
                 </div>
                 <div className="bg-red-400 rounded-2xl p-8 text-white">
                     <h3 className="text-xl font-bold mb-2">Top Rated</h3>
                     <p className="text-sm mb-4">Best sellers this week</p>
-                    <button className="text-white underline text-sm font-medium">Browse →</button>
+                    <button onClick={() => navigate("/categories")} className="text-white underline text-sm font-medium">Browse →</button>
                 </div>
             </section>
 
