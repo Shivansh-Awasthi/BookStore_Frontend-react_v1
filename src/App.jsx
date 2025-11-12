@@ -23,7 +23,7 @@ import OrderHistory from "./components/AllPages/OrderPages/OrderHistory";
 import OrderDetails from "./components/AllPages/OrderPages/OrderDetails";
 import ReturnPolicy from "./components/OtherPages/ReturnPolicy";
 import RefundPolicy from "./components/OtherPages/RefundPolicy";
-import Disclaimer from "./components/OtherPages/Disclamer";
+import Disclaimer from "./components/OtherPages/Disclaimer";
 import TermsAndConditions from "./components/OtherPages/TermsAndConditions";
 
 // Layout component that includes the Header and Footer
@@ -138,7 +138,7 @@ function App() {
             path="/return-policy"
             element={
               <Layout>
-                < ReturnPolicy />
+                <ReturnPolicy />
               </Layout>
             }
           />
@@ -147,16 +147,16 @@ function App() {
             path="/refund-policy"
             element={
               <Layout>
-                < RefundPolicy />
+                <RefundPolicy />
               </Layout>
             }
           />
 
           <Route
-            path="/disclamer"
+            path="/disclaimer"
             element={
               <Layout>
-                < Disclaimer />
+                <Disclaimer />
               </Layout>
             }
           />
@@ -165,11 +165,10 @@ function App() {
             path="/terms-and-conditions"
             element={
               <Layout>
-                < TermsAndConditions />
+                <TermsAndConditions />
               </Layout>
             }
           />
-
 
           <Route
             path="/contact-us"
