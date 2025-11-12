@@ -26,7 +26,7 @@ import RefundPolicy from "./components/OtherPages/RefundPolicy";
 import Disclaimer from "./components/OtherPages/Disclaimer";
 import TermsAndConditions from "./components/OtherPages/TermsAndConditions";
 import Profile from "./components/AllPages/Profile/Profile";
-import { AdminDashboard } from "./components/Admin/Dashboard/AdminDashboard";
+import AdminDashboard from "./components/Admin/Dashboard/AdminDashboard";
 
 // Layout component that includes the Header and Footer
 const Layout = ({ children }) => {
@@ -120,10 +120,10 @@ function App() {
           />
 
           {/* Admin Routes - No Header/Footer */}
-          <Route path="/admin/books/publish" element={<PublishBooks />} />
+          <Route path="/admin/books/publish" element={<Layout><PublishBooks /> </Layout>} />
           <Route
             path="/admin/books/update-book/:id"
-            element={<UpdateBooks />}
+            element={<Layout> <UpdateBooks /> </Layout>}
           />
 
           {/* User authentication routes */}
@@ -217,6 +217,7 @@ function App() {
               </Layout>
             }
           />
+
 
           {/* OAuth Routes */}
           <Route path="/oauth-success" element={<OAuthSuccess />} />
