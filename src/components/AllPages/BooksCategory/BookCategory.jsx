@@ -123,14 +123,7 @@ const BookCategory = () => {
           </h3>
           <p className="text-sm text-gray-600 mb-2">by {book.author}</p>
 
-          {book.ratings && (
-            <div className="flex items-center mb-2">
-              {renderStars(book.ratings.average || 0)}
-              <span className="text-xs text-gray-500 ml-1">
-                ({book.ratings.count || 0})
-              </span>
-            </div>
-          )}
+
 
           <div className="flex items-center justify-between">
             <div>
@@ -238,8 +231,8 @@ const BookCategory = () => {
           key={i}
           onClick={() => handlePageChange(i)}
           className={`px-3 py-2 rounded-md text-sm font-medium ${currentPage === i
-              ? "bg-blue-600 text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            ? "bg-blue-600 text-white"
+            : "text-gray-700 hover:bg-gray-100"
             }`}
         >
           {i}
@@ -411,8 +404,8 @@ const BookCategory = () => {
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-2 ${viewMode === "grid"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-50"
                     }`}
                 >
                   <Grid className="h-4 w-4" />
@@ -420,8 +413,8 @@ const BookCategory = () => {
                 <button
                   onClick={() => setViewMode("list")}
                   className={`p-2 ${viewMode === "list"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-50"
                     }`}
                 >
                   <List className="h-4 w-4" />
