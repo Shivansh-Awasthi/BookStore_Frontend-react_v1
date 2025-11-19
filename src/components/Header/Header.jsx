@@ -65,7 +65,8 @@ const Header = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL
+        `${
+          import.meta.env.VITE_API_URL
         }/api/books/search?q=${encodeURIComponent(query)}&limit=5`
       );
 
@@ -122,7 +123,6 @@ const Header = () => {
   const navigationItems = [
     { name: "Home", href: "/", icon: Home },
     { name: "Books", href: "/categories", icon: Book },
-    { name: "Policy", href: "/privacy-policy", icon: Building },
     { name: "About Us", href: "/about-us", icon: Users },
     { name: "Contact Us", href: "/contact-us", icon: Mail },
     { name: "My Orders", href: "/orders", icon: UserPen },
@@ -136,7 +136,12 @@ const Header = () => {
           {/* Logo - Text hidden on small screens */}
           <Link to="/" className="flex-shrink-0">
             <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600" />
+              <img
+                src="https://i.postimg.cc/7GhqH8ST/logo.png"
+                className="h-14"
+                border="0"
+                alt="logo"
+              ></img>
               <span className="ml-2 text-xl font-bold text-gray-900 hidden sm:block">
                 CrazyDealsOnline
               </span>
@@ -165,25 +170,29 @@ const Header = () => {
           {/* Search Bar - Expands when active */}
           <div
             ref={searchRef}
-            className={`flex items-center space-x-2 sm:space-x-4 ${isSearchActive ? "flex-1" : "justify-end"
-              }`}
+            className={`flex items-center space-x-2 sm:space-x-4 ${
+              isSearchActive ? "flex-1" : "justify-end"
+            }`}
           >
             {/* Search Container */}
             <div
-              className={`relative ${isSearchActive ? "flex-1 max-w-2xl" : "w-auto"
-                }`}
+              className={`relative ${
+                isSearchActive ? "flex-1 max-w-2xl" : "w-auto"
+              }`}
             >
               <form onSubmit={handleSearchSubmit} className="relative">
                 <div
-                  className={`relative transition-all duration-300 ${isSearchActive ? "w-full" : "w-10"
-                    }`}
+                  className={`relative transition-all duration-300 ${
+                    isSearchActive ? "w-full" : "w-10"
+                  }`}
                 >
                   <input
                     ref={inputRef}
                     type="text"
                     placeholder="Search books, authors..."
-                    className={`w-full py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${isSearchActive ? "opacity-100" : "opacity-0 w-0"
-                      }`}
+                    className={`w-full py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                      isSearchActive ? "opacity-100" : "opacity-0 w-0"
+                    }`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -191,10 +200,11 @@ const Header = () => {
                   <button
                     type="button"
                     onClick={handleSearchToggle}
-                    className={`absolute inset-y-0 left-0 flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${isSearchActive
+                    className={`absolute inset-y-0 left-0 flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${
+                      isSearchActive
                         ? "text-gray-500 hover:text-gray-700"
                         : "text-gray-600 hover:text-blue-600 hover:bg-gray-100"
-                      }`}
+                    }`}
                   >
                     {isSearchActive ? (
                       <X className="h-5 w-5" />
@@ -279,22 +289,19 @@ const Header = () => {
 
             {/* Other Icons - Hidden when search is active */}
             {!isSearchActive && (
-              <div className="flex items-center space-x-1 sm:space-x-2">
+              <>
                 {/* Cart Icon */}
                 <button
                   onClick={() => navigate("/viewcart")}
                   className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors duration-200"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    0
-                  </span>
                 </button>
 
-                {/* Login/User Icon - Hidden on smallest screens */}
+                {/* Login/User Icon */}
                 <button
                   onClick={() => navigate("/profile")}
-                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors duration-200 hidden xs:block"
+                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors duration-200"
                 >
                   <User className="h-5 w-5" />
                 </button>
@@ -306,7 +313,7 @@ const Header = () => {
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-              </div>
+              </>
             )}
           </div>
         </div>
