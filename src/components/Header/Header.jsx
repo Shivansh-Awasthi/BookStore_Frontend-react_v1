@@ -65,8 +65,7 @@ const Header = () => {
 
     try {
       const response = await fetch(
-        `${
-          import.meta.env.VITE_API_URL
+        `${import.meta.env.VITE_API_URL
         }/api/books/search?q=${encodeURIComponent(query)}&limit=5`
       );
 
@@ -142,9 +141,6 @@ const Header = () => {
                 border="0"
                 alt="logo"
               ></img>
-              <span className="ml-2 text-xl font-bold text-gray-900 hidden sm:block">
-                CrazyDealsOnline
-              </span>
             </div>
           </Link>
 
@@ -170,29 +166,25 @@ const Header = () => {
           {/* Search Bar - Expands when active */}
           <div
             ref={searchRef}
-            className={`flex items-center space-x-2 sm:space-x-4 ${
-              isSearchActive ? "flex-1" : "justify-end"
-            }`}
+            className={`flex items-center space-x-2 sm:space-x-4 ${isSearchActive ? "flex-1" : "justify-end"
+              }`}
           >
             {/* Search Container */}
             <div
-              className={`relative ${
-                isSearchActive ? "flex-1 max-w-2xl" : "w-auto"
-              }`}
+              className={`relative ${isSearchActive ? "flex-1 max-w-2xl" : "w-auto"
+                }`}
             >
               <form onSubmit={handleSearchSubmit} className="relative">
                 <div
-                  className={`relative transition-all duration-300 ${
-                    isSearchActive ? "w-full" : "w-10"
-                  }`}
+                  className={`relative transition-all duration-300 ${isSearchActive ? "w-full" : "w-10"
+                    }`}
                 >
                   <input
                     ref={inputRef}
                     type="text"
                     placeholder="Search books, authors..."
-                    className={`w-full py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                      isSearchActive ? "opacity-100" : "opacity-0 w-0"
-                    }`}
+                    className={`w-full py-2 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${isSearchActive ? "opacity-100" : "opacity-0 w-0"
+                      }`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -200,11 +192,10 @@ const Header = () => {
                   <button
                     type="button"
                     onClick={handleSearchToggle}
-                    className={`absolute inset-y-0 left-0 flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${
-                      isSearchActive
+                    className={`absolute inset-y-0 left-0 flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${isSearchActive
                         ? "text-gray-500 hover:text-gray-700"
                         : "text-gray-600 hover:text-blue-600 hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     {isSearchActive ? (
                       <X className="h-5 w-5" />
